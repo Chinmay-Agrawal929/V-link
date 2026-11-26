@@ -1,0 +1,71 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global function to check if user is signed in
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if false;
+      
+      match /{document=**} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+    }
+    
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+    }
+    
+    match /chats/{chatId} {
+      allow read, create, update: if isAuthenticated();
+      allow delete: if false;
+      
+      match /messages/{messageId} {
+        allow read, create: if isAuthenticated();
+        allow update, delete: if false;
+      }
+    }
+
+    match /skill_profiles/{userId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /resources/{resourceId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+    }
+
+    match /vit_events/{eventId} {
+      allow read, write: if true;
+    }
+
+    match /campus_feed/{feedId} {
+      allow read, write: if true;
+    }
+
+    match /project_showcases/{projectId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    match /project_collaborations/{collabId} {
+      allow read, write: if true;
+    }
+    
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
